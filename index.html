@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Skin Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .file-upload {
+            position: relative;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: #764ba2;
+            background: #f0f4ff;
+            transform: translateY(-2px);
+        }
+
+        .file-upload.dragover {
+            border-color: #764ba2;
+            background: #e8f2ff;
+            transform: scale(1.02);
+        }
+
+        #fileInput {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .upload-text {
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .image-preview {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 30px auto;
+            min-width: 200px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #667eea;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .results-header {
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .analysis-intro {
+            background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .analysis-intro h3 {
+            color: #333;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .analysis-intro p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.2);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .product-name {
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .product-match {
+            background: #e8f5e8;
+            color: #2d5f2d;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            border-left: 3px solid #4caf50;
+        }
+
+        .product-price {
+            color: #667eea;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .product-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .product-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .disclaimer {
+            background: #fff8e1;
+            border: 1px solid #ffc107;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            color: #8a6d00;
+        }
+
+        .disclaimer h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .disclaimer p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .error-message {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #fab1a0;
+            display: none;
+        }
+
+        .success-message {
+            background: #e6f7e6;
+            color: #00b894;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #a8e6a3;
+            display: none;
+        }
+
+        .clear-btn {
+            background: #ddd;
+            color: #666;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px auto;
+            display: block;
+        }
+
+        .clear-btn:hover {
+            background: #ccc;
+            color: #555;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        .fallback-content {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #667eea;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .file-upload {
+                padding: 40px 15px;
+            }
+
+            .upload-icon {
+                font-size: 3rem;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .product-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ AI Skin Analysis</h1>
+            <p>Upload your photo for professional skin analysis and personalized product recommendations</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="file-upload" id="fileUpload">
+                <input type="file" id="fileInput" accept="image/*">
+                <span class="upload-icon">📸</span>
+                <div class="upload-text">Click to upload or drag & drop</div>
+                <div class="upload-hint">Supports JPG, PNG, GIF (Max 10MB)</div>
+            </div>
+
+            <div class="image-preview" id="imagePreview">
+                <img id="previewImage" class="preview-image" alt="Preview">
+                <button class="clear-btn" onclick="clearImage()">Remove Image</button>
+            </div>
+        </div>
+
+        <button class="analyze-btn" id="analyzeBtn" onclick="analyzeImage()" disabled>
+            🔬 Analyze Skin & Get Recommendations
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Analyzing your skin and finding perfect products... This may take up to 30 seconds</div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="results-section" id="resultsSection">
+            <h2 class="results-header">✨ Your Personalized Skincare Recommendations</h2>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        const API_BASE_URL = 'http://127.0.0.1:5000'; // Your Flask server URL
+
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const fileUpload = document.getElementById('fileUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsContent = document.getElementById('resultsContent');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // File input change event
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop events
+        fileUpload.addEventListener('dragover', handleDragOver);
+        fileUpload.addEventListener('dragleave', handleDragLeave);
+        fileUpload.addEventListener('drop', handleDrop);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            fileUpload.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            fileUpload.classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            fileUpload.classList.remove('dragover');
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    processFile(file);
+                } else {
+                    showError('Please select a valid image file.');
+                }
+            }
+        }
+
+        function processFile(file) {
+            // Validate file size (10MB limit)
+            if (file.size > 10 * 1024 * 1024) {
+                showError('File size must be less than 10MB.');
+                return;
+            }
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file.');
+                return;
+            }
+
+            selectedFile = file;
+
+            // Show image preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                imagePreview.style.display = 'block';
+                analyzeBtn.disabled = false;
+                hideMessages();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function analyzeImage() {
+            if (!selectedFile) {
+                showError('Please select an image first.');
+                return;
+            }
+
+            // Show loading state
+            showLoading();
+            analyzeBtn.disabled = true;
+            hideMessages();
+
+            try {
+                // Create FormData for file upload
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                // Make API request
+                const response = await fetch(`${API_BASE_URL}/product_recommend_upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.text();
+
+                // Display results
+                showResults(result);
+                showSuccess('Analysis completed successfully! 🎉');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`Analysis failed: ${error.message}. Please check if your server is running on ${API_BASE_URL}`);
+            } finally {
+                hideLoading();
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function showResults(result) {
+            try {
+                // Try to extract JSON from the result
+                const jsonMatch = result.match(/```json\s*([\s\S]*?)\s*```/);
+
+                if (jsonMatch) {
+                    const jsonData = JSON.parse(jsonMatch[1]);
+                    if (Array.isArray(jsonData)) {
+                        resultsContent.innerHTML = formatProductArray(jsonData);
+                    } else if (jsonData.recommendations) {
+                        resultsContent.innerHTML = formatProductRecommendations(jsonData);
+                    } else {
+                        resultsContent.innerHTML = formatSingleProduct(jsonData);
+                    }
+                } else {
+                    // Try to parse the entire result as JSON
+                    try {
+                        const jsonData = JSON.parse(result);
+                        if (Array.isArray(jsonData)) {
+                            resultsContent.innerHTML = formatProductArray(jsonData);
+                        } else if (jsonData.recommendations) {
+                            resultsContent.innerHTML = formatProductRecommendations(jsonData);
+                        } else {
+                            resultsContent.innerHTML = formatSingleProduct(jsonData);
+                        }
+                    } catch (parseError) {
+                        // Fallback to original formatting
+                        resultsContent.innerHTML = formatFallbackResults(result);
+                    }
+                }
+            } catch (error) {
+                console.error('Error parsing results:', error);
+                resultsContent.innerHTML = formatFallbackResults(result);
+            }
+
+            resultsSection.style.display = 'block';
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function formatProductRecommendations(data) {
+            let html = `
+                <div class="analysis-intro">
+                    <h3><span class="icon">🎯</span> Personalized Analysis Results</h3>
+                    <p>Based on your skin analysis, we've curated the perfect skincare routine from Viana.lk to address your specific concerns and achieve your skin goals.</p>
+                </div>
+                <div class="products-grid">
+            `;
+
+            data.recommendations.forEach((product) => {
+                html += createProductCard(product);
+            });
+
+            html += '</div>' + getDisclaimer();
+            return html;
+        }
+
+        function formatProductArray(products) {
+            let html = `
+                <div class="analysis-intro">
+                    <h3><span class="icon">🎯</span> Recommended Products for Your Skin</h3>
+                    <p>Based on your skin analysis, here are the perfect products from Viana.lk tailored to your specific needs.</p>
+                </div>
+                <div class="products-grid">
+            `;
+
+            products.forEach((product) => {
+                html += createProductCard(product);
+            });
+
+            html += '</div>' + getDisclaimer();
+            return html;
+        }
+
+        function formatSingleProduct(product) {
+            let html = `
+                <div class="analysis-intro">
+                    <h3><span class="icon">🎯</span> Your Perfect Match</h3>
+                    <p>Based on your skin analysis, here's the ideal product from Viana.lk for your skin concerns.</p>
+                </div>
+                <div class="products-grid">
+            `;
+
+            html += createProductCard(product);
+            html += '</div>' + getDisclaimer();
+            return html;
+        }
+
+        function createProductCard(product) {
+            const name = product.product_name || product.name || 'Product Name';
+            const description = product.description || 'No description available';
+            const imageUrl = product.image_url || 'https://www.bobbibrowncosmetics.com/';
+            const price = product.price || 'Price available on site';
+            const whyMatch = product.why_it_matches || product.why_recommended || '';
+            const productLink = product.product_url || 'https://www.bobbibrowncosmetics.com/';
+            // Create a product link - you might need to adjust this based on your actual URL structure
+            //const productLink = `https://viana.lk/product/${name.toLowerCase().replace(/\s+/g, '-')}`;
+
+            return `
+                <div class="product-card">
+                    <img src="${imageUrl}" alt="${name}" class="product-image" onerror="this.src='https://via.placeholder.com/300x200?text=Product+Image'">
+                    <h4 class="product-name">${name}</h4>
+                    <div class="product-price">${price}</div>
+                    <p class="product-description">${description}</p>
+                    ${whyMatch ? `<div class="product-match">
+                        <strong>🎯 Why this matches your skin:</strong><br>
+                        ${whyMatch}
+                    </div>` : ''}
+                    <a href="${productLink}" target="_blank" class="product-link">
+                        View Product <span class="icon">→</span>
+                    </a>
+                </div>
+            `;
+        }
+
+        function getDisclaimer() {
+            return `
+                <div class="disclaimer">
+                    <h4><span class="icon">⚠️</span> Important Note</h4>
+                    <p>These recommendations are based on AI analysis and are for informational purposes only. Always patch test new products and consult with a dermatologist for personalized advice, especially if you have sensitive skin or existing skin conditions.</p>
+                </div>
+            `;
+        }
+
+        function formatFallbackResults(result) {
+            return `
+                <div class="analysis-intro">
+                    <h3><span class="icon">📋</span> Analysis Results</h3>
+                    <p>Here are your personalized skincare recommendations:</p>
+                </div>
+                <div class="fallback-content">${result}</div>
+                ${getDisclaimer()}
+            `;
+        }
+
+        function clearImage() {
+            selectedFile = null;
+            fileInput.value = '';
+            imagePreview.style.display = 'none';
+            analyzeBtn.disabled = true;
+            resultsSection.style.display = 'none';
+            hideMessages();
+        }
+
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+
+        // Test server connection on page load
+        window.addEventListener('load', async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/product_recommend_upload`, {
+                    method: 'OPTIONS'
+                });
+                console.log('✅ Server connection test completed');
+            } catch (error) {
+                console.warn('⚠️ Server connection test failed:', error);
+                // Don't show error immediately as the server might just not support OPTIONS
+            }
+        });
+    </script>
+</body>
+</html>
