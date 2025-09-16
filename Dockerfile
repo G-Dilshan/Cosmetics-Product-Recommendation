@@ -34,4 +34,4 @@ ENV GENERATED_FOLDER=/flask-app/generated
 EXPOSE 5000
 
 # Command to run the application with Gunicorn
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "main:app"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]
