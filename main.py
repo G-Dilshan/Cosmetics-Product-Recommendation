@@ -116,7 +116,7 @@ def product_recommend_upload():
                         "role": "user",
                         "content": [
                             {"type": "input_text",
-                             "text": "Analyze the provided facial image and identify visible skin concerns, aesthetic conditions, and overall skin characteristics. Provide a comprehensive assessment in JSON format."},
+                             "text": user_prompt.vision_prompt},
                             {
                                 "type": "input_image",
                                 "image_url": f"data:image/jpeg;base64,{encoded_image}",
@@ -139,7 +139,9 @@ def product_recommend_upload():
 
             result = chain.invoke({"concerns": concern_output})
 
-            return result
+            # return result
+            return jsonify({"result": result,
+                        "concerns": concern_output}), 200
 
         finally:
             # Clean up temp file
