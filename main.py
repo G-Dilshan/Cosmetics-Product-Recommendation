@@ -58,7 +58,7 @@ def product_recommend():
                     "role": "user",
                     "content": [
                         {"type": "input_text",
-                         "text": "Analyze the provided facial image and identify visible skin concerns, aesthetic conditions, lip concerns, around eye concerns and overall skin characteristics. Provide a comprehensive assessment in JSON format."},
+                         "text": user_prompt.vision_prompt},
                         {
                             "type": "input_image",
                             "image_url": f"data:image/jpeg;base64,{encoded_image}",
@@ -81,7 +81,9 @@ def product_recommend():
 
         result = chain.invoke({"concerns": concern_output})
 
-        return result
+        # return result
+        return jsonify({"result": result,
+                        "concerns": concern_output}), 200
 
     except AttributeError as e:
         return jsonify({"error": f"AttributeError - OpenAI client issue: {str(e)}"}), 500

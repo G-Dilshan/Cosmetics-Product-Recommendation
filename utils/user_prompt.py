@@ -162,3 +162,45 @@ Format your response as:
 ]
 ```
 """)
+
+# vision_prompt = """
+# Analyze the provided facial image and identify visible skin concerns, aesthetic conditions, lip concerns, around eye concerns and overall skin characteristics.
+# Categorized the face into forehead, temples, periorbital area, cheeks, nose, perioral area, chin, jawline, ears, scalp and lips.
+# Provide a comprehensive assessment for each category in JSON format.
+# """
+
+vision_prompt = """
+Analyze the provided facial image and provide a comprehensive assessment of visible skin, aesthetic, and specific area concerns.
+The assessment must be provided in a single JSON object with the following structure and content requirements:
+
+Categorization: The face must be divided into the following key anatomical and aesthetic areas: full_face, forehead, temples, periorbital_area, cheeks, nose, perioral_area, chin, jawline, ears, scalp, and lips.
+
+Content for Each Category:
+For the full_face category, include a detailed overall_assessment describing the general skin type, texture, tone, and major aesthetic conditions observed across the entire face.
+For all other anatomical categories, provide a detailed assessment listing all visible concerns (e.g., fine lines, wrinkles, acne, redness, volume loss, pigmentation, sun damage, pore size, texture issues).
+
+Ratings:
+For the full_face category, include a rating property, which is a numerical score out of 100 representing the overall skin health and aesthetic appearance.
+For all other anatomical categories, include a rating property, which is a numerical score out of 100 representing the health and aesthetic condition of that specific area.
+
+JSON Format Example Structure:
+{
+  "full_face": {
+    "rating": 75,
+    "overall_assessment": "Combination skin type with visible sun damage, mild acne, and moderate loss of volume, contributing to a tired appearance."
+  },
+  "forehead": {
+    "rating": 80,
+    "assessment":
+  },
+  "periorbital_area": {
+    "rating": 65,
+    "assessment": 
+  },
+  "lips": {
+    "rating": 70,
+    "assessment": 
+  },
+  // ... (Include all 12 categories: full_face, forehead, temples, periorbital_area, cheeks, nose, perioral_area, chin, jawline, ears, scalp, lips)
+}
+"""
